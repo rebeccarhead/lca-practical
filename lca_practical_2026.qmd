@@ -1,0 +1,296 @@
+---
+title: "Introduction to Latent Class Analysis practical"
+subtitle: "Running and Interpreting Latent Class Models in Stata • 19 March 2026"
+author:
+  - name: Dr Rebecca Rhead
+    affiliation: 
+      name: King's College London
+#date: 03/19/2026
+#date-format: long
+title-block-banner: true
+format:
+  html:
+    theme: flatly
+    toc: true
+    embed-resources: true
+    number-sections: true
+---
+![](stick.png){width=40%}
+
+## Aims:
+
+In this practical, we will use **latent class analysis** to explore whether there are distinct patterns of health behaviour in a simulated dataset of 1,500 people.
+
+We will:
+
+1) Inspect a dataset and examine a set of indicator variables for an LCA model
+2) Fit latent class models in Stata using `gsem`
+3) Compare models using fit statistics and interpretability
+4) Describe and label classes
+
+### Learning objectives 
+
+By the end of this practical you should be able to:
+
+- Fit a sequence of latent class models in Stata using `gsem`
+- Compare models using AIC, BIC, class sizes and interpretability
+- Describe and label classes using conditional probabilities
+- Explain why model choice in LCA involves both statistics and judgement
+
+## Open the data
+
+1) Download and open the <a href="https://emckclac-my.sharepoint.com/:u:/g/personal/k1767438_kcl_ac_uk/IQDsy7oBheCcQrfppdAsD6QiAQh5HkYeGrDBJ1250rwZgok?e=Bb41Zc" target="_blank" rel="noopener noreferrer">template do-file</a>. Add a title, your name and date to the top. Add and run your code using the do file as your progress through the practical to keep a record of your analysis.
+
+2) Download <a href="https://emckclac-my.sharepoint.com/:u:/g/personal/k1767438_kcl_ac_uk/IQDwv_029EhySqgTB0N8ak_kAZ9E4Vtim_DaQnnlUcuuAqg?e=kL4js5" target="_blank" rel="noopener noreferrer">lca_data.dta</a> and save it somewhere sensible. This is a simulated dataset on health behaviours in a sample of 1,500 people.
+
+3) In your Stata do file, use the code below to set your working directory to the folder where you saved the file and to open the dataset.
+
+```stata
+cd "PUT_YOUR_FOLDER_PATH_HERE"
+use "lca_data.dta", clear
+```
+
+## Get to know the dataset
+
+The dataset contains several binary indicators of lifestyle behaviours (0 = No, 1 = Yes) that will be used in the LCA model. These are listed below.
+
+| Variable | Meaning |
+|---|---|
+| `fruitveg_daily` | Eats fruit and vegetables daily |
+| `sugary_drink_daily` | Drinks sugary drinks daily |
+| `physically_active` | Is physically active |
+| `plays_sport` | Plays sport |
+| `short_sleep` | Has short sleep duration |
+| `high_screen_time` | Has high screen time |
+| `smokes` | Smokes |
+| `binge_drinking` | Reports binge drinking |
+| `high_stress` | Reports high stress |
+
+In addition, the dataset also contains information on participants’ age, gender and level of deprivation. 
+
+It is always good practice to become familiar with your dataset before doing any modelling. Use the commands below to get a quick overview of the data. Don’t forget to use your do-file!
+
+```stata
+describe
+summarize
+codebook
+```
+
+You may also find it helpful to add variables labels using `label var`. This can make your output easier to read.
+
+```stata
+label var smokes "Do they smoke?"
+```
+
+Then use `tab` to look at the distribution of some of your indicators.
+
+```stata
+foreach v in fruitveg_daily sugary_drink_daily physically_active ///
+             plays_sport short_sleep ///
+             high_screen_time smokes binge_drinking high_stress {
+    tab `v'
+}
+```
+
+You can also create crosstabs to explore how variables relate to each other. For example, is the percentage of people reporting short sleep higher among those who report high stress?
+
+```stata
+tab high_stress short_sleep, row chi2
+```
+
+## Fitting your model
+
+Now we will begin fitting a series of latent class models.
+In latent class analysis, models are typically fitted in sequence, starting with a small number of classes and gradually increasing the number. The models are then compared to determine which one provides the best representation of the data.
+
+**Follow these steps:**
+
+1) Fit models with 1 to 5 classes.
+2) After running each model, record the AIC and BIC values from the `estat lcgof` output.
+3) Note these values in your do-file or add them to the table below (don't refresh the page though!).
+
+**When comparing models:**
+
+- Lower AIC and BIC values indicate better model fit.
+- As more classes are added, model fit will usually improve.
+
+Your goal is to identify a model that balances statistical fit and interpretability, meaning it fits the data reasonably well and produces classes that make sense when you examine their behaviour patterns.
+
+<table style="border-collapse: collapse; width: 80%;">
+  <thead>
+    <tr>
+      <th style="border: 1px solid #ccc; padding: 6px; width: 20%;">Number of classes</th>
+      <th style="border: 1px solid #ccc; padding: 6px; width: 30%;">AIC</th>
+      <th style="border: 1px solid #ccc; padding: 6px; width: 30%;">BIC</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td style="border: 1px solid #ccc; padding: 6px;">1</td>
+      <td contenteditable="true" style="border: 1px solid #ccc; padding: 6px;"></td>
+      <td contenteditable="true" style="border: 1px solid #ccc; padding: 6px;"></td>
+    </tr>
+    <tr>
+      <td style="border: 1px solid #ccc; padding: 6px;">2</td>
+      <td contenteditable="true" style="border: 1px solid #ccc; padding: 6px;"></td>
+      <td contenteditable="true" style="border: 1px solid #ccc; padding: 6px;"></td>
+    </tr>
+    <tr>
+      <td style="border: 1px solid #ccc; padding: 6px;">3</td>
+      <td contenteditable="true" style="border: 1px solid #ccc; padding: 6px;"></td>
+      <td contenteditable="true" style="border: 1px solid #ccc; padding: 6px;"></td>
+    </tr>
+    <tr>
+      <td style="border: 1px solid #ccc; padding: 6px;">4</td>
+      <td contenteditable="true" style="border: 1px solid #ccc; padding: 6px;"></td>
+      <td contenteditable="true" style="border: 1px solid #ccc; padding: 6px;"></td>
+    </tr>
+    <tr>
+      <td style="border: 1px solid #ccc; padding: 6px;">5</td>
+      <td contenteditable="true" style="border: 1px solid #ccc; padding: 6px;"></td>
+      <td contenteditable="true" style="border: 1px solid #ccc; padding: 6px;"></td>
+    </tr>
+  </tbody>
+</table>
+
+
+### Fit a 1-class model (baseline)
+
+Start by fitting a 1-class model. This model assumes that everyone in the dataset belongs to the same group, meaning there are no hidden subgroups in behaviour. In other words, it estimates the overall probability of each behaviour in the population, rather than identifying different behavioural patterns.
+
+Although this model is not very interesting substantively, it provides a baseline for comparison. As you fit models with more classes, you will see whether allowing hidden groups improves model fit.
+
+```stata
+gsem (fruitveg_daily sugary_drink_daily physically_active plays_sport ///
+      short_sleep high_screen_time smokes binge_drinking high_stress <-), ///
+      logit lclass(C 1)
+
+estat lcgof
+```
+
+📝 Make a note of the AIC and BIC of this 1-class model.
+
+### Fit additional models
+
+Now fit models with 2-5 classes and compare their goodness of fit statistics.
+
+Did everything run ok? 😉
+
+::: {.callout-tip collapse="true"}
+## Oh no, the 5-class model didn’t converge!
+
+This is completely normal, so don’t worry.
+
+When we ask the model to estimate more classes, the estimation process becomes more complicated. Sometimes the model simply cannot find a stable solution that fits the data well enough.
+
+In this case the model was not able to estimate a reliable **5-class solution**, so it stops before producing results.
+
+This is quite common in latent class analysis and usually means the data do not support that many classes. In practice, researchers would then compare the models that *did* converge and decide which one provides the best and most interpretable solution.
+:::
+
+
+## Choose a model and interpret the classes
+
+Now we need to decide which model is the most suitable.
+
+### Compare model fit
+
+Look back at the goodness-of-fit statistics from the models you estimated. These information criteria help us compare models. In general, **lower values indicate better model fit**.
+
+🤔 Which of your models have the **lowest AIC and BIC**?
+
+BUT model fit statistics are not the only thing to consider. A good model should also:
+
+- Produce classes that are **large enough to be meaningful**
+- Produce classes that are **interpretable**
+
+So we will focus on the models with the **lowest AIC and BIC**, and examine them more closely.
+
+### Look at class sizes
+
+Lets re-run the **TWO** models with the lowest AIC and BIC. After running the `gsem` command for each of these models, use the command below to examine the **size of each class**.
+
+```stata
+estat lcprob
+```
+
+This shows the **proportion of the sample in each class**.
+
+Ask yourself:
+
+- Are any classes extremely small?
+- Do the class sizes seem reasonable?
+
+### Examine the class profiles
+
+Next, look at the **conditional probabilities** for each indicator. After running your `gsem` model, run the command below in your **do-file** to examine the class profiles.
+
+⏳ It may take Stata a few minutes to complete this.
+
+```stata
+estat lcmean
+```
+
+These probabilities describe how likely people in each class are to report each behaviour. This is the key to interpreting the classes.
+
+For example, one class might show:
+
+- High probability of physical activity
+- Low probability of smoking
+- Low probability of binge drinking
+
+Another class might show the opposite pattern.
+
+### Choose your final model
+
+Using both **model fit statistics** and **interpretability**, choose the model that you think works best.
+
+
+::: {.callout-tip collapse="true"}
+## Struggling to choose your final model?
+
+A helpful first step is to focus on **a few key indicators** and see how they differ across the classes.
+
+For example, imagine the output from `estat lcmean` showed the following probabilities:
+
+| Behaviour | Class 1 | Class 2 | Class 3 |
+|---|---|---|---|
+| physically_active | 0.80 | 0.30 | 0.55 |
+| smokes | 0.10 | 0.60 | 0.20 |
+| binge_drinking | 0.15 | 0.50 | 0.25 |
+
+You might interpret this as:
+
+- **Class 1:** High physical activity and very low smoking and binge drinking  
+  → This could be described as a **“healthy lifestyle” group**.
+
+- **Class 2:** Low physical activity and high smoking and binge drinking  
+  → This might be a **“higher-risk lifestyle” group**.
+
+- **Class 3:** Moderate probabilities across most behaviours  
+  → This could be a **“mixed lifestyle” group**.
+
+When interpreting your own model:
+
+- Look for **clear patterns** in the probabilities across indicators.
+- Focus on the **behaviours that most clearly distinguish the classes**.
+- Ask yourself whether the classes make **substantive sense**.
+
+If two models have very similar fit statistics, the model with **clearer and more interpretable classes** is usually the better choice.
+:::
+
+Choose the model you think provides the best balance of **model fit** and **interpretability**.
+
+In your **do-file**, write a few short notes about your chosen model.
+
+For your final model:
+
+- Describe each class based on the conditional probabilities.
+- Give each class a short, descriptive name.
+
+For example, you might think about:
+
+- Are some classes healthier than others?
+- Are some behaviours more common in certain classes?
+- What might you call each class?
+
